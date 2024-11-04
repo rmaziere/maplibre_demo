@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MapLibre Demo avec Sélecteur de Style et WMS</title>
+    <link href='https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css' rel='stylesheet' />
+    <style>
+        #map {
+            width: 100%;
+            height: 90vh;
+        }
+        .style-selector {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Démonstrateur fonds de carte</h1>
+    <p>Utilisez la liste déroulante pour tester et comparer les fonds de carte proposés.</p>
+    <div id="map"></div>
+
+    <script src='https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js'></script>
+    <script>
+        // Initialisation de la carte
+        const map = new maplibregl.Map({
+            container: 'map',
+            style: 'https://api.maptiler.com/maps/positron/style.json?key=Rxg0LEe2G9HSPvMK6ubY', // Style par défaut
+            center: [-0.5800, 44.8378], // Coordonnées pour centrer sur Bordeaux
+            zoom: 13
+        });
+
+        // Création du sélecteur de style comme un contrôle personnalisé
+        class StyleSelectorControl {
+            onAdd(map) {
+                this._map = map;
+                const container = document.createElement('div');
+                container.className = 'style-selector maplibregl-ctrl';
+
+                // Contenu du sélecteur de fond de carte
+                const label = document.createElement('label');
+                label.textContent = 'Choisir le fond de carte :';
+                label.style.marginRight = '5px';
+
+                const select = document.createElement('select');
+                select.id = 'mapStyle';
+
+                // Options de styles
+                const styles = [
+                    {name: 'Positron', url: 'https://api.maptiler.com/maps/positron/style.json?key=Rxg0LEe2G9HSPvMK6ubY'},
+                    {name: 'OSM Bright', url: 'https://api.maptiler.com/maps/bright/style.json?key=Rxg0LEe2G9HSPvMK6ubY'},
+                    {name: 'OSM Standard', url: 'https://api.maptiler.com/maps/openstreetmap/style.json?key=Rxg0LEe2G9HSPvMK6ubY'},
+                    {name: 'Satellite WMS', url: 'satellite'}
+                ];
+
+                // Ajouter les options au sélecteur
+                styles.forEach(style => {
+                    const option = document.createElement('option');
+                    option.value = style.url;
+                    option.textContent = style.name;
+                    select.appendChild(option);
+                });
+
+                // Écouteur de changement de style
+                select.addEventListener('change', function() {
+                    const style = this.value;
+                    if (style === 'satellite') {
+                        map.setStyle({
+                            "version": 8,
+                            "sources": {
+                                "satellite": {
+                                    "type": "raster",
+                                    "tiles": [
+                                    "https://data.geopf.fr/wms-r/ows?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image/jpeg&TRANSPARENT=true&LAYERS=HR.ORTHOIMAGERY.ORTHOPHOTOS&CRS=EPSG:3857&WIDTH=256&HEIGHT=256&STYLES=&BBOX={bbox-epsg-3857}"
+                                    ],
+                                    "tileSize": 256,
+                                    "attribution": "Satellite data © GeoPF"
+                                }
+                            },
+                            "layers": [
+                                {
+                                    "id": "satellite",
+                                    "type": "raster",
+                                    "source": "satellite",
+                                    "minzoom": 0,
+                                    "maxzoom": 18
+                                }
+                            ]
+                        });
+                    } else {
+                        map.setStyle(style);
+                    }
+                });
+
+                // container.appendChild(label);
+                container.appendChild(select);
+                return container;
+            }
+
+            onRemove() {
+                this._container.parentNode.removeChild(this._container);
+                this._map = undefined;
+            }
+        }
+
+        // Ajout du sélecteur de fond de carte sous le contrôle de navigation
+        map.addControl(new StyleSelectorControl(), 'top-left');
+
+        // Ajout du contrôle de navigation (zoom)
+        map.addControl(new maplibregl.NavigationControl(), 'top-right');
+    </script>
+</body>
+</html>
