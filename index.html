@@ -18,6 +18,11 @@
             font-family: Arial, sans-serif;
             font-size: 12px;
         }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -34,6 +39,8 @@
             center: [-0.5800, 44.8378], // Coordonnées pour centrer sur Bordeaux
             zoom: 13
         });
+
+        let cadastreLayerActive = false;
 
         // Création du sélecteur de style comme un contrôle personnalisé
         class StyleSelectorControl {
@@ -68,6 +75,19 @@
 
                 // Écouteur de changement de style
                 select.addEventListener('change', function() {
+                    // Supprimer temporairement la couche cadastre si elle est active
+                    if (cadastreLayerActive) {
+                        if (map.getLayer('bati-cadastre-layer')) {
+                            map.removeLayer('bati-cadastre-layer');
+                        }
+                        if (map.getLayer('cadastre-layer')) {
+                            map.removeLayer('cadastre-layer');
+                        }
+                        if (map.getSource('cadastre')) {
+                            map.removeSource('cadastre');
+                        }
+                    }
+
                     const style = this.value;
                     if (style === 'satellite') {
                         map.setStyle({
@@ -95,10 +115,97 @@
                     } else {
                         map.setStyle(style);
                     }
+
+                    // Réactiver la couche cadastre après le chargement du style
+                    map.once('styledata', () => {
+                        if (cadastreLayerActive) {
+                        map.addSource('cadastre', {
+                            "type": "vector",
+                            "url": "https://openmaptiles.geo.data.gouv.fr/data/cadastre.json"
+                        });
+                        map.addLayer({
+                            "id": "bati-cadastre-layer",
+                            "source": "cadastre",
+                            "source-layer": "batiments", // Remplacez par le nom exact de la couche si nécessaire
+                            "type": "fill",
+                            "paint": {
+                                "fill-color": "grey",
+                                "fill-opacity": 0.7
+                            }
+                        });
+                        map.addLayer({
+                            "id": "cadastre-layer",
+                            "source": "cadastre",
+                            "source-layer": "parcelles", // Remplacez par le nom exact de la couche si nécessaire
+                            "type": "line",
+                            "paint": {
+                                "line-color": "orange"
+                            }
+                        });
+                        }
+                    });
                 });
 
-                // container.appendChild(label);
+                // Création de la checkbox pour la superposition de la couche
+                const checkboxContainer = document.createElement('div');
+                checkboxContainer.className = 'checkbox-label';
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = 'layerToggle';
+
+                const checkboxLabel = document.createElement('label');
+                checkboxLabel.textContent = 'Afficher la couche Cadastre';
+                checkboxLabel.htmlFor = 'layerToggle';
+
+                checkboxContainer.appendChild(checkbox);
+                checkboxContainer.appendChild(checkboxLabel);
+
+                // Gestion de l'activation/désactivation de la couche
+                checkbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        cadastreLayerActive = true;
+                        map.addSource('cadastre', {
+                            "type": "vector",
+                            "url": "https://openmaptiles.geo.data.gouv.fr/data/cadastre.json"
+                        });
+                        map.addLayer({
+                            "id": "bati-cadastre-layer",
+                            "source": "cadastre",
+                            "source-layer": "batiments", // Remplacez par le nom exact de la couche si nécessaire
+                            "type": "fill",
+                            "paint": {
+                                "fill-color": "grey",
+                                "fill-opacity": 0.7
+                            }
+                        });
+                        map.addLayer({
+                            "id": "cadastre-layer",
+                            "source": "cadastre",
+                            "source-layer": "parcelles", // Remplacez par le nom exact de la couche si nécessaire
+                            "type": "line",
+                            "paint": {
+                                "line-color": "orange"
+                            }
+                        });
+                    } else {
+                        cadastreLayerActive = false;
+                        if (map.getLayer('bati-cadastre-layer')) {
+                            map.removeLayer('bati-cadastre-layer');
+                        }
+                        if (map.getLayer('cadastre-layer')) {
+                            map.removeLayer('cadastre-layer');
+                        }
+                        if (map.getSource('cadastre')) {
+                            map.removeSource('cadastre');
+                        }
+                    }
+                });
+
+                // Ajout du sélecteur et de la checkbox au conteneur
+                container.appendChild(label);
                 container.appendChild(select);
+                container.appendChild(checkboxContainer);
                 return container;
             }
 
