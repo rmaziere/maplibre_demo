@@ -36,8 +36,12 @@
         const map = new maplibregl.Map({
             container: 'map',
             style: 'https://api.maptiler.com/maps/positron/style.json?key=Rxg0LEe2G9HSPvMK6ubY', // Style par défaut
-            center: [-0.5800, 44.8378], // Coordonnées pour centrer sur Bordeaux
-            zoom: 13
+            // center: [-0.5800, 44.8378], // Coordonnées pour centrer sur Bordeaux
+            // zoom: 13
+            center: [-0.5782, 44.8372], // Coordonnées pour centrer sur Bordeaux
+            zoom: 16,
+            //16/44.8372/-0.5782
+            maxZoom: 20
         });
 
         let cadastreLayerActive = false;
@@ -107,8 +111,8 @@
                                     "id": "satellite",
                                     "type": "raster",
                                     "source": "satellite",
-                                    "minzoom": 0,
-                                    "maxzoom": 18
+                                    "minzoom": 8,
+                                    "maxzoom": 20.01
                                 }
                             ]
                         });
